@@ -1,6 +1,6 @@
 {
-  "domain": "anytype",
-  "name": "anytype-todo",
+  "domain": "anytype_todo",
+  "name": "anytype_todo",
   "codeowners": [
     "@Encotric"
   ],
