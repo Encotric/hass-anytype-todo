@@ -1,8 +1,9 @@
+# Copyright (c) 2026 Sebastian Wilke
 """Todo platform for Anytype ToDo."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, NoReturn, cast
 
 from homeassistant.components.todo import (
     TodoItem,
@@ -21,6 +22,10 @@ if TYPE_CHECKING:
 
     from .coordinator import AnytypeDataUpdateCoordinator
     from .data import AnytypeConfigEntry
+
+
+def _raise_todo_error(message: str) -> NoReturn:
+    raise HomeAssistantError(message)
 
 
 async def async_setup_entry(
@@ -90,9 +95,8 @@ class AnytypeTodoListEntity(AnytypeEntity, TodoListEntity):
         )
 
         if todo_list is None:
-            raise HomeAssistantError(
-                f"Error fetching todos: list {self._attr_name} not found."
-            )
+            message = f"Error fetching todos: list {self._attr_name} not found."
+            _raise_todo_error(message)
 
         self._todos = []
         for item in todo_list.items:
@@ -131,27 +135,29 @@ class AnytypeTodoListEntity(AnytypeEntity, TodoListEntity):
                 body=self.markdown_page.to_markdown(),
             )
         except Exception as err:
-            raise HomeAssistantError(f"Error creating todo: {err}") from err
+            message = f"Error creating todo: {err}"
+            raise HomeAssistantError(message) from err
 
         self.async_update_listeners()
 
     async def async_update_todo_item(self, item: TodoItem) -> None:
         """Update an existing todo item and persist it to Anytype."""
         if not item.uid:
-            raise HomeAssistantError("Todo item must have a UID to be updated")
+            message = "Todo item must have a UID to be updated"
+            raise HomeAssistantError(message)
 
         try:
             todo_list = self.markdown_page.get_list(cast("str", self._attr_name))
             if todo_list is None:
-                raise HomeAssistantError(
-                    f"Error updating todo: list {self._attr_name} not found."
-                )
+                message = f"Error updating todo: list {self._attr_name} not found."
+                _raise_todo_error(message)
 
             updated_summary = item.summary
             if updated_summary is None:
                 existing_item = todo_list.get_item(item.uid)
                 if existing_item is None:
-                    raise HomeAssistantError("Todo item not found")
+                    message = "Todo item not found"
+                    _raise_todo_error(message)
                 updated_summary = existing_item.summary
 
             completed: bool | None = None
@@ -173,7 +179,8 @@ class AnytypeTodoListEntity(AnytypeEntity, TodoListEntity):
             )
             await self.coordinator.async_request_refresh()
         except Exception as err:
-            raise HomeAssistantError(f"Error updating todo: {err}") from err
+            message = f"Error updating todo: {err}"
+            raise HomeAssistantError(message) from err
         self.async_update_listeners()
 
     async def async_delete_todo_items(self, uids: list[str]) -> None:
@@ -181,9 +188,8 @@ class AnytypeTodoListEntity(AnytypeEntity, TodoListEntity):
         try:
             todo_list = self.markdown_page.get_list(cast("str", self._attr_name))
             if todo_list is None:
-                raise HomeAssistantError(
-                    f"Error deleting todos: list {self._attr_name} not found."
-                )
+                message = f"Error deleting todos: list {self._attr_name} not found."
+                _raise_todo_error(message)
 
             for uid in uids:
                 todo_list.remove_item(uid)
@@ -197,5 +203,6 @@ class AnytypeTodoListEntity(AnytypeEntity, TodoListEntity):
             )
             await self.coordinator.async_request_refresh()
         except Exception as err:
-            raise HomeAssistantError(f"Error deleting todos: {err}") from err
+            message = f"Error deleting todos: {err}"
+            raise HomeAssistantError(message) from err
         self.async_update_listeners()

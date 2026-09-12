@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Sebastian Wilke
 """DataUpdateCoordinator for Anytype ToDo."""
 
 from __future__ import annotations
@@ -7,11 +8,11 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from .anytype import AnytypeMarkdownToDoPage
 from .api import (
     AnytypeApiClientAuthenticationError,
     AnytypeApiClientError,
 )
-from .anytype import AnytypeMarkdownToDoPage
 
 if TYPE_CHECKING:
     from .data import AnytypeConfigEntry
@@ -36,7 +37,8 @@ class AnytypeDataUpdateCoordinator(DataUpdateCoordinator):
                 page = AnytypeMarkdownToDoPage(markdown)
                 return {"page": page}
 
-            raise UpdateFailed("Anytype API responded with invalid body.")
+            message = "Anytype API responded with invalid body."
+            raise UpdateFailed(message)
 
         except AnytypeApiClientAuthenticationError as exception:
             raise ConfigEntryAuthFailed(exception) from exception

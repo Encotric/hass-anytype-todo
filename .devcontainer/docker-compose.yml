@@ -8,7 +8,7 @@ services:
     ports:
       - 8123:8123
   anytype:
-    image: ghcr.io/anyproto/anytype-cli:v0.1.11
+    image: ghcr.io/anyproto/anytype-cli:v0.3.7
     ports:
       - 31012:31012
     command: "serve --listen-address 0.0.0.0:31012"

@@ -1,9 +1,5 @@
-"""
-Custom integration to integrate Anytype with Home Assistant Todo lists.
-
-For more details about this integration, please refer to
-https://github.com/Encotric/hass-anytype-todo
-"""
+# Copyright (c) 2026 Sebastian Wilke
+"""Anytype Todo integration."""
 
 from __future__ import annotations
 

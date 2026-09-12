@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Sebastian Wilke
 """Constants for anytype."""
 
 from logging import Logger, getLogger

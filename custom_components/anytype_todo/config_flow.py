@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Sebastian Wilke
 """Adds the config flow for Anytype ToDo."""
 
 from __future__ import annotations

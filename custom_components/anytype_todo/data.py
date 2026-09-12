@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Sebastian Wilke
 """Custom types for anytype."""
 
 from __future__ import annotations

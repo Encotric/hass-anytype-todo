@@ -1,4 +1,7 @@
-"Anytype markdown parsing and rendering logic, as well as the AnytypeMarkdownToDoPage class which represents a parsed markdown page with to-do lists."
+# Copyright (c) 2026 Sebastian Wilke
+"""Parse and render Anytype markdown pages with to-do lists."""
+
+from typing import Any
 
 import marko
 from homeassistant.components.todo import (
@@ -6,22 +9,28 @@ from homeassistant.components.todo import (
 )
 from homeassistant.components.todo.const import TodoItemStatus
 from homeassistant.exceptions import HomeAssistantError
-from marko.block import Document, List, ListItem
+from marko.block import Document
 from marko.inline import InlineElement
 from marko.md_renderer import MarkdownRenderer
 
 
 class ToDoListItemMarkdown(InlineElement):
+    """Represent a markdown checkbox item."""
+
     pattern = r"\[([ xX])\]\s+(.*)"
     parse_children = False
 
-    def __init__(self, match):
+    def __init__(self, match: Any) -> None:
+        """Initialize a checkbox item from a regex match."""
         self.completed = match.group(1) != " "
         self.summary = match.group(2)
 
 
-class TodoListItemMarkdownRenderer(object):
-    def render_to_do_list_item_markdown(self, element: ToDoListItemMarkdown):
+class TodoListItemMarkdownRenderer:
+    """Render checkbox items back to markdown."""
+
+    def render_to_do_list_item_markdown(self, element: ToDoListItemMarkdown) -> str:
+        """Render one checkbox item."""
         return f"[{'x' if element.completed else ' '}] {element.summary}"
 
 
@@ -31,16 +40,20 @@ todo_extension = marko.MarkoExtension(
 
 
 class AnytypeMarkdownTodoItem:
+    """Represent one Anytype markdown todo item."""
+
     summary: str
     completed: bool
     uid: str
 
-    def __init__(self, *, summary: str, completed: bool, idx: int):
+    def __init__(self, *, summary: str, completed: bool, idx: int) -> None:
+        """Initialize a todo item."""
         self.summary = summary
         self.completed = completed
         self.uid = str(hash((summary, completed, idx)))
 
     def convert_to_hass(self) -> TodoItem:
+        """Convert this item to Home Assistant's todo representation."""
         return TodoItem(
             uid=self.uid,
             summary=self.summary,
@@ -52,31 +65,40 @@ class AnytypeMarkdownTodoItem:
 
 
 class AnytypeMarkdownTodoList:
+    """Represent a named list of Anytype markdown todo items."""
+
     name: str
     ast_index: int
     items: list[AnytypeMarkdownTodoItem]
     length: int
 
-    def __init__(self, name: str, ast_index: int, items: list[AnytypeMarkdownTodoItem]):
+    def __init__(
+        self, name: str, ast_index: int, items: list[AnytypeMarkdownTodoItem]
+    ) -> None:
+        """Initialize a todo list."""
         self.name = name
         self.ast_index = ast_index
         self.items = items
         self.length = len(items)
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Return the number of items in the list."""
         return self.length
 
     def get_item(self, uid: str) -> AnytypeMarkdownTodoItem | None:
+        """Return the item with the given UID, if present."""
         for item in self.items:
             if item.uid == uid:
                 return item
 
         return None
 
-    def remove_item(self, uid: str):
+    def remove_item(self, uid: str) -> None:
+        """Remove the item with the given UID."""
         item = self.get_item(uid)
         if item is None:
-            raise HomeAssistantError("Anytype API: tried to remove non-existing item.")
+            message = "Todo item not found"
+            raise HomeAssistantError(message)
         self.items.remove(item)
         self.length -= 1
 
@@ -90,7 +112,8 @@ class AnytypeMarkdownTodoList:
         """Update an item in place and keep its generated UID in sync."""
         item = self.get_item(uid)
         if item is None:
-            raise HomeAssistantError("Anytype API: tried to update non-existing item.")
+            message = "Todo item not found"
+            raise HomeAssistantError(message)
 
         idx = self.items.index(item)
         if summary is not None:
@@ -99,12 +122,14 @@ class AnytypeMarkdownTodoList:
             item.completed = completed
         item.uid = str(hash((item.summary, item.completed, idx)))
 
-    def add_item(self, item: AnytypeMarkdownTodoItem):
+    def add_item(self, item: AnytypeMarkdownTodoItem) -> None:
+        """Append an item to the list."""
         self.items.append(item)
         self.length += 1
 
     def to_markdown(self) -> str:
-        result = str()
+        """Render the list as markdown."""
+        result = ""
         for item in self.items:
             result += f"- [{'x' if item.completed else ' '}] {item.summary}\n"
 
@@ -116,10 +141,13 @@ marko_instance = marko.Markdown(extensions=[todo_extension], renderer=MarkdownRe
 
 
 class AnytypeMarkdownToDoPage:
+    """Represent a parsed Anytype markdown page."""
+
     lists: list[AnytypeMarkdownTodoList]
     ast: Document
 
     def __init__(self, markdown: str) -> None:
+        """Parse a markdown page and collect its todo lists."""
         self.ast = marko_instance.parse(markdown)
         self.lists = []
 
@@ -172,12 +200,14 @@ class AnytypeMarkdownToDoPage:
             )
 
     def get_list(self, name: str) -> AnytypeMarkdownTodoList | None:
+        """Return the list with the given name, if present."""
         for todo_list in self.lists:
             if todo_list.name == name:
                 return todo_list
         return None
 
     def to_markdown(self) -> str:
+        """Render the page back to markdown."""
         result = ""
         last_ast_index = 0
         for todo_list in self.lists:

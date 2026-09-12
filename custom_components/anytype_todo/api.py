@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Sebastian Wilke
 """Anytype API Client."""
 
 from __future__ import annotations
